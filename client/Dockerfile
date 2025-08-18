@@ -12,6 +12,9 @@ RUN npm ci
 # Copy all source code
 COPY . .
 
+# Copy environment file
+COPY .env.production .env
+
 # Build Vite app
 RUN npm run build
 
@@ -21,8 +24,8 @@ FROM nginx:alpine AS production
 # Copy built files to nginx html directory
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copy custom nginx config from project root
-COPY /nginx/nginx.conf /etc/nginx/conf.d/default.conf
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Nginx listens on port 80 internally
 EXPOSE 80

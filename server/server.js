@@ -6,34 +6,12 @@ const compression = require('compression');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const http = require('http');
-const socketIo = require('socket.io');
 const path = require('path');
 require('dotenv').config();
 
-// Import routes
-const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/users');
-const dashboardRoutes = require('./routes/dashboard');
-const projectRoutes = require('./routes/projects');
-const inventoryRoutes = require('./routes/inventory');
-const notificationRoutes = require('./routes/notifications');
-const settingsRoutes = require('./routes/settings');
-
-// Import middleware
-const { errorHandler } = require('./middleware/errorHandler');
-const { logger } = require('./utils/logger');
-
-// Import WebSocket handlers
-const { setupWebSocket } = require('./services/websocket');
-
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server, {
-  cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
-    methods: ["GET", "POST"]
-  }
-});
+
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/admin-dashboard', {
@@ -41,10 +19,10 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/admin-das
   useUnifiedTopology: true,
 })
 .then(() => {
-  logger.info('Connected to MongoDB');
+
 })
 .catch((err) => {
-  logger.error('MongoDB connection error:', err);
+
   process.exit(1);
 });
 
@@ -93,7 +71,7 @@ app.use(cors({
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 } else {
-  app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
+  app.use(morgan('combined'));
 }
 
 // Static files
@@ -109,22 +87,21 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API routes
+// API Routes
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
+const dashboardRoutes = require('./routes/dashboard');
+const projectRoutes = require('./routes/projects');
+const inventoryRoutes = require('./routes/inventory');
+
+// Mount routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/inventory', inventoryRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/settings', settingsRoutes);
 
-// WebSocket setup
-setupWebSocket(io);
-
-// Error handling middleware
-app.use(errorHandler);
-
-// 404 handler
+// 404 handler - Must be before error handler
 app.use('*', (req, res) => {
   res.status(404).json({
     error: 'Route not found',
@@ -132,29 +109,34 @@ app.use('*', (req, res) => {
   });
 });
 
-const PORT = process.env.PORT || 5000;
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    error: 'Internal Server Error',
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+  });
+});
 
+// Start server
+const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  logger.info(`Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
+  console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  logger.info('SIGTERM received, shutting down gracefully');
   server.close(() => {
-    logger.info('Process terminated');
     mongoose.connection.close();
     process.exit(0);
   });
 });
 
 process.on('SIGINT', () => {
-  logger.info('SIGINT received, shutting down gracefully');
   server.close(() => {
-    logger.info('Process terminated');
     mongoose.connection.close();
     process.exit(0);
   });
 });
 
-module.exports = { app, server, io };
+module.exports = { app, server };
