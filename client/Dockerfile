@@ -9,11 +9,15 @@ COPY package.json package-lock.json ./
 # Install dependencies
 RUN npm ci
 
-# Copy all source code
+# Copy all source code except public folder
 COPY . .
 
 # Copy environment file
 COPY .env.production .env
+
+# Ensure public directory exists and copy public files
+RUN mkdir -p /app/public
+COPY public/* /app/public/
 
 # Build Vite app
 RUN npm run build

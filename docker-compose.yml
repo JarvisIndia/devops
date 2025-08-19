@@ -48,6 +48,8 @@ services:
       REDIS_URL: redis://redis:6379
       JWT_SECRET: your-super-secret-jwt-key-change-this-in-production
       JWT_EXPIRE: 7d
+      CORS_ORIGIN: http://localhost:3000
+      FRONTEND_URL: http://localhost:3000
       JWT_REFRESH_SECRET: your-refresh-secret-key
       JWT_REFRESH_EXPIRE: 30d
       EMAIL_HOST: smtp.gmail.com
@@ -55,7 +57,6 @@ services:
       EMAIL_USER: your-email@gmail.com
       EMAIL_PASS: your-app-password
       EMAIL_FROM: noreply@admin-dashboard.com
-      FRONTEND_URL: http://localhost:3000
       RATE_LIMIT_WINDOW_MS: 900000
       RATE_LIMIT_MAX_REQUESTS: 100
       BCRYPT_ROUNDS: 12
@@ -86,14 +87,16 @@ services:
     container_name: admin-dashboard-frontend
     restart: unless-stopped
     environment:
-      VITE_API_URL: http://backend:5000
-      VITE_WS_URL: ws://backend:5000
+      VITE_API_URL: /api
+      VITE_WS_URL: ws://localhost:3000
     ports:
       - "3000:80" # expose nginx port
     depends_on:
       - backend
     networks:
       - admin-dashboard-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]
       interval: 30s
@@ -109,8 +112,7 @@ services:
       - "8080:80"
       - "8443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./nginx/ssl:/etc/nginx/ssl:ro
       - ./nginx/logs:/var/log/nginx
     depends_on:

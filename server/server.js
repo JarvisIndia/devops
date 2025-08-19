@@ -12,17 +12,16 @@ require('dotenv').config();
 const app = express();
 const server = http.createServer(app);
 
-
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/admin-dashboard', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
 .then(() => {
-
+  console.log('Connected to MongoDB');
 })
 .catch((err) => {
-
+  console.error('MongoDB connection error:', err);
   process.exit(1);
 });
 
@@ -74,7 +73,7 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('combined'));
 }
 
-// Static files
+// Static files for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health check endpoint
@@ -93,19 +92,34 @@ const userRoutes = require('./routes/users');
 const dashboardRoutes = require('./routes/dashboard');
 const projectRoutes = require('./routes/projects');
 const inventoryRoutes = require('./routes/inventory');
+const notificationsRoutes = require('./routes/notifications');
 
-// Mount routes
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/projects', projectRoutes);
-app.use('/api/inventory', inventoryRoutes);
+// Mount API routes
+const apiRouter = express.Router();
+apiRouter.use('/auth', authRoutes);
+apiRouter.use('/users', userRoutes);
+apiRouter.use('/dashboard', dashboardRoutes);
+apiRouter.use('/projects', projectRoutes);
+apiRouter.use('/inventory', inventoryRoutes);
+apiRouter.use('/notifications', notificationsRoutes);
 
-// 404 handler - Must be before error handler
-app.use('*', (req, res) => {
+// Mount all routes under /api
+app.use('/api', apiRouter);
+
+// API 404 handler for /api routes
+app.use('/api/*', (req, res) => {
   res.status(404).json({
-    error: 'Route not found',
+    error: 'API route not found',
     path: req.originalUrl
+  });
+});
+
+// Root path response
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Admin Dashboard API Server',
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 

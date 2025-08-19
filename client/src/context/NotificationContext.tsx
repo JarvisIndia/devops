@@ -158,7 +158,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   const removeNotification = async (id: string) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/notifications/${id}`, {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+      const response = await fetch(`${apiUrl}/api/notifications/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -180,7 +181,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   const fetchNotifications = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/notifications', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+      const response = await fetch(`${apiUrl}/api/notifications`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },

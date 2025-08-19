@@ -82,14 +82,13 @@ function AppContent() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Router>
-        <Routes>
-          {/* Public routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/verify-email" element={<VerifyEmail />} />
+      <Routes>
+        {/* Public routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
           
           {/* Protected routes */}
           <Route path="/" element={
@@ -112,7 +111,6 @@ function AppContent() {
           {/* 404 route */}
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </Router>
       
       {/* Custom notification snackbar */}
       <NotificationSnackbar
@@ -127,15 +125,17 @@ function App() {
   return (
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
-        <CustomThemeProvider>
-          <AuthProvider>
-            <NotificationProvider>
-              <SocketProvider>
-                <AppContent />
-              </SocketProvider>
-            </NotificationProvider>
-          </AuthProvider>
-        </CustomThemeProvider>
+        <Router>
+          <CustomThemeProvider>
+            <AuthProvider>
+              <NotificationProvider>
+                <SocketProvider>
+                  <AppContent />
+                </SocketProvider>
+              </NotificationProvider>
+            </AuthProvider>
+          </CustomThemeProvider>
+        </Router>
       </QueryClientProvider>
     </HelmetProvider>
   );
